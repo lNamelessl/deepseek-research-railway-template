@@ -30,7 +30,7 @@ enabled.
 
 | Variable | Required | Meaning |
 |---|---|---|
-| `DEEPSEEK_API_KEY` | yes | Your DeepSeek key from platform.deepseek.com. Deep reports cost roughly $0.05–0.25 each (searches + tokens, billed to your account — the finished page shows the measured estimate). The service boots healthy without it; report creation returns a clear error until it is set. |
+| `DEEPSEEK_API_KEY` | yes | Your DeepSeek key from platform.deepseek.com. Deep reports cost roughly $0.02–0.25 each (searches + tokens, billed to your account — the finished page shows the measured estimate). The service boots healthy without it; report creation returns a clear error until it is set. |
 | `APP_ACCESS_PASSWORD` | no | When set, report **creation** requires this password (the deploy form generates one via `${{secret(24)}}`). Reading reports via their unguessable `/reports/<id>` links stays open. |
 | `MAX_REPORTS` | no | FIFO retention cap for finished reports (default 100). Oldest finished reports are pruned after each new one. |
 | `MAX_OUTPUT_TOKENS` | no | Output budget per report (default 12000). Thinking consumes the same budget as report text; a report that hits the budget is stored but flagged as truncated. |
@@ -43,10 +43,11 @@ enabled.
 - Search and page fetch are **$0.75 per 1,000 uses**; `deepseek-flash` tokens are
   $0.30/1M input and $1.20/1M output at peak (01:00–04:00 and 06:00–10:00 UTC
   Mon–Fri are half price; cache hits cost a fraction of the miss price).
-- A typical report lands around **$0.05–0.25 at list rates** (the measured example
-  above ≈ $0.21 peak / ≈ $0.10 off-peak); narrower topics run cheaper. The finished
-  page shows the measured usage (searches, fetches, tokens) and an estimated cost
-  at list rates so every report's spend is visible.
+- A typical report lands around **$0.02–0.25 at list rates** depending on topic
+  breadth (measured: a narrow factual question ran 4 searches + 2 fetches ≈ $0.02;
+  a full technology comparison ran 28 searches + 18 fetches ≈ $0.21 peak / ≈ $0.10
+  off-peak). The finished page shows the measured usage (searches, fetches, tokens)
+  and an estimated cost at list rates so every report's spend is visible.
 - **One report runs at a time.** While a report is generating, other attempts
   get a friendly 429 page ("try again shortly").
 
