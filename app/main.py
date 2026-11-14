@@ -133,6 +133,19 @@ def _db_get(report_id: str) -> Optional[dict]:
     return dict(row) if row else None
 
 
+def _prune_finished() -> None:
+    """Keep at most MAX_REPORTS finished rows (in-flight exempt). Called after
+    inserting a new row and again after a row reaches terminal state, so idle
+    state never exceeds the cap."""
+    with _db() as conn:
+        conn.execute(
+            "DELETE FROM reports WHERE id IN ("
+            "  SELECT id FROM reports WHERE status != 'running'"
+            "  ORDER BY created_at DESC LIMIT -1 OFFSET ?)",
+            (MAX_REPORTS,),
+        )
+
+
 # ---------------------------------------------------------------- markdown (XSS-safe)
 
 def _build_renderer() -> MarkdownIt:
@@ -443,6 +456,7 @@ async def generate_report(report_id: str, topic: str, max_tokens: int) -> None:
                 (title, status, error, markdown, json.dumps(citations, ensure_ascii=False),
                  json.dumps(usage_out, ensure_ascii=False), finish, report_id),
             )
+        _prune_finished()
         _set_progress(report_id, done=True, ok=(status == "done"), status=status, phase="done")
 
     except Exception as exc:  # noqa: BLE001 — one honest failure path
@@ -453,6 +467,7 @@ async def generate_report(report_id: str, topic: str, max_tokens: int) -> None:
                     "UPDATE reports SET status='failed', error=? WHERE id=?",
                     (err, report_id),
                 )
+            _prune_finished()
         except sqlite3.Error:
             pass
         _set_progress(report_id, done=True, ok=False, status="failed", error=err)
@@ -553,12 +568,7 @@ async def research(request: Request, topic: str = Form(""), access_password: str
             (report_id, topic, now),
         )
         # FIFO retention, in-flight reports exempt
-        conn.execute(
-            "DELETE FROM reports WHERE id IN ("
-            "  SELECT id FROM reports WHERE status != 'running'"
-            "  ORDER BY created_at DESC LIMIT -1 OFFSET ?)",
-            (MAX_REPORTS,),
-        )
+        _prune_finished()
     _set_progress(report_id, phase="starting")
     _spawn(report_id, topic, MAX_TOKENS)
     resp = RedirectResponse(f"/reports/{report_id}", status_code=302)
