@@ -1,5 +1,7 @@
 # DeepSeek Research
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/deepseek-research)
+
 Cited deep-research reports from one topic, with live progress. Enter a topic,
 watch the deep search run (thinking + up to ~20 server-side searches), and get a
 cited markdown report with a shareable link and a markdown export.

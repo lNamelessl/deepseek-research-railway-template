@@ -567,8 +567,9 @@ async def research(request: Request, topic: str = Form(""), access_password: str
             "INSERT INTO reports (id, topic, status, created_at) VALUES (?, ?, 'running', ?)",
             (report_id, topic, now),
         )
-        # FIFO retention, in-flight reports exempt
-        _prune_finished()
+    # FIFO retention, in-flight reports exempt (after the INSERT's transaction closed —
+    # a second connection inside the open write transaction would self-deadlock)
+    _prune_finished()
     _set_progress(report_id, phase="starting")
     _spawn(report_id, topic, MAX_TOKENS)
     resp = RedirectResponse(f"/reports/{report_id}", status_code=302)
