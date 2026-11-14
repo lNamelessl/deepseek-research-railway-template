@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepSeek Research — cited deep-search reports</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <h1>DeepSeek Research</h1>
+    <p class="tagline">Enter a topic. Deep search runs live — thinking plus up to ~20 searches — and you get a cited markdown report with a shareable link.</p>
+  </header>
+  <form method="post" action="/research" class="card">
+    <label for="topic">Research topic</label>
+    <textarea id="topic" name="topic" rows="3" maxlength="2000" required
+              placeholder="e.g. SQLite vs Postgres for analytics"></textarea>
+    {% if password_required %}
+    <label for="access_password">Access password</label>
+    <input type="password" id="access_password" name="access_password" required>
+    {% endif %}
+    <button type="submit">Start research</button>
+    <p class="note">Deep reports take a few minutes and roughly $0.02&ndash;0.05 of your
+    DeepSeek account credit (searches + tokens). One report runs at a time;
+    the {{ max_reports }} most recent are kept. Retrieval runs on DeepSeek's
+    server-side web search ({{ model }}) with the provider safety review enabled.</p>
+  </form>
+  {% if recent %}
+  <section class="recent card">
+    <h2>Recent reports</h2>
+    <ul>
+      {% for r in recent %}
+      <li>
+        <a href="/reports/{{ r.id }}">{{ r.title or r.topic }}</a>
+        <span class="muted">{{ r.created_at[:10] }} &middot; {{ r.status }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  <footer class="muted">Powered by DeepSeek server-side web search. Usage bills to the
+  deployer's DeepSeek account; report links are unguessable and readable by anyone who has them.</footer>
+</main>
+</body>
+</html>

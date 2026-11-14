@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+{% if report.status == 'done' %}
+<title>{{ report.title or report.topic }} — DeepSeek Research</title>
+{% else %}
+<title>DeepSeek Research</title>
+{% endif %}
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<main class="wrap">
+  {% if report.status == 'running' %}
+  <header>
+    <h1>Research in progress</h1>
+    <p class="tagline">Topic: {{ report.topic }}</p>
+  </header>
+  <div class="card progress-card" id="progress-card" data-report-id="{{ report.id }}">
+    <p id="phase-line" class="phase">Starting deep search&hellip;</p>
+    <p id="detail-line" class="muted detail"></p>
+    <div class="bar"><div id="bar-fill" class="bar-fill"></div></div>
+    <p class="muted note">Deep reports run minutes and up to ~20 searches. This page
+    updates live; you can leave and come back to the same link.</p>
+  </div>
+  <script src="/static/progress.js"></script>
+  {% elif report.status == 'done' %}
+  <header>
+    <h1>{{ report.title or report.topic }}</h1>
+    <p class="meta">Topic: {{ report.topic }} &middot; {{ report.created_at[:16].replace('T', ' ') }} UTC
+    {%- if usage %} &middot; {{ usage.search_calls }} search{{ '' if usage.search_calls == 1 else 'es' }}
+    {%- if usage.fetch_calls %} + {{ usage.fetch_calls }} page fetch{{ '' if usage.fetch_calls == 1 else 'es' }}{% endif %}
+    {%- endif %}
+    {%- if cost is not none %} &middot; est. cost &asymp; ${{ '%.3f' | format(cost) }} (list rates){% endif %}</p>
+    <p class="actions"><a href="/reports/{{ report.id }}/export.md">Download markdown</a> &middot; <a href="/">New report</a></p>
+  </header>
+  {% if truncated %}<p class="warn">The model reached its output budget while writing — this report may be truncated.</p>{% endif %}
+  <article class="card report">{{ report_html | safe }}</article>
+  {% if citations %}
+  <section class="card sources">
+    <h2>Sources</h2>
+    <ol>
+      {% for c in citations %}
+      <li>
+        <a href="{{ c.url }}" target="_blank" rel="noopener noreferrer">{{ c.title }}</a>
+        {% if c.cited_text %}<span class="muted">— {{ c.cited_text[:180] }}</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endif %}
+  {% elif report.status == 'refused' %}
+  <header><h1>Report declined</h1></header>
+  <div class="card">
+    <p>The provider's safety review declined this topic:</p>
+    <p class="muted">{{ report.error }}</p>
+    <p><a href="/">Try another topic</a></p>
+  </div>
+  {% elif report.status == 'failed' %}
+  <header><h1>Report failed</h1></header>
+  <div class="card">
+    <p class="muted">{{ report.error or 'An unknown error occurred while generating this report.' }}</p>
+    <p><a href="/">Try again</a></p>
+  </div>
+  {% endif %}
+</main>
+</body>
+</html>
